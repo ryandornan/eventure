@@ -1,21 +1,26 @@
-"""
-This module takes care of starting the API Server, Loading the DB and Adding the endpoints
-"""
-from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User
-from api.utils import generate_sitemap, APIException
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_sqlalchemy import SQLAlchemy
+from api.models import User, Event, ContactSubmission
+from api.utils import generate_sitemap, APIException
 
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+app = Flask(__name__)
+CORS(app)
 
-from models import User, Event
-from app import bcrypt
+# Configure the Flask-JWT-Extended extension
+app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"
+jwt = JWTManager(app)
 
-# Create a Blueprint for the routes
-events_bp = Blueprint('events', __name__)
+# Configure the SQLAlchemy database
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
 
-@events_bp.route('/api/create_event', methods=['POST'])
+# Create a Blueprint for the events routes
+events_bp = Blueprint("events", __name__)
+
+@events_bp.route("/api/create_event", methods=["POST"])
 @jwt_required()
 def create_event():
     current_user_id = get_jwt_identity()
@@ -23,53 +28,101 @@ def create_event():
 
     if current_user and current_user.is_promoter:
         data = request.json
-        title = data.get('title')
-        location = data.get('location')
-        ticket_price = data.get('ticket_price')
-        category = data.get('category')
+        title = data.get("title")
+        location = data.get("location")
+        ticket_price = data.get("ticket_price")
+        category = data.get("category")
 
-        new_event = Event(title=title, location=location, ticket_price=ticket_price, category=category, promoter=current_user)
+        new_event = Event(
+            title=title,
+            location=location,
+            ticket_price=ticket_price,
+            category=category,
+            promoter=current_user,
+        )
         db.session.add(new_event)
         db.session.commit()
 
-        return jsonify({'message': 'Event created successfully'}), 201
+        return jsonify({"message": "Event created successfully"}), 201
     else:
-        return jsonify({'message': 'Permission denied'}), 403
+        return jsonify({"message": "Permission denied"}), 403
 
 # Create another Blueprint for authentication routes
-auth_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint("auth", __name__)
 
-@auth_bp.route('/api/register', methods=['POST'])
+@auth_bp.route("/api/register", methods=["POST"])
 def register():
     data = request.json
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-    email = data.get('email')
-    password = data.get('password')
-    is_promoter = data.get('is_promoter', False)
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
+    email = data.get("email")
+    password = data.get("password")
+    is_promoter = data.get("is_promoter", False)
 
     if User.query.filter_by(email=email).first():
-        return jsonify({'message': 'Email is already registered'}), 400
+        return jsonify({"message": "Email is already registered"}), 400
 
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
-    new_user = User(first_name=first_name, last_name=last_name, email=email,
-                    password=hashed_password, is_promoter=is_promoter)
+    new_user = User(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        password=hashed_password,
+        is_promoter=is_promoter,
+    )
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({'message': 'User registered successfully'}), 201
+    return jsonify({"message": "User registered successfully"}), 201
 
-@auth_bp.route('/api/login', methods=['POST'])
+@auth_bp.route("/api/login", methods=["POST"])
 def login():
     data = request.json
-    email = data.get('email')
-    password = data.get('password')
+    email = data.get("email")
+    password = data.get("password")
 
     user = User.query.filter_by(email=email).first()
 
     if user and bcrypt.check_password_hash(user.password, password):
         access_token = create_access_token(identity=user.id, expires_delta=False)
-        return jsonify({'access_token': access_token, 'is_promoter': user.is_promoter}), 200
+        return jsonify(
+            {"access_token": access_token, "is_promoter": user.is_promoter}
+        ), 200
     else:
-        return jsonify({'message': 'Invalid email or password'}), 401
+        return jsonify({"message": "Invalid email or password"}), 401
+
+# Register the Blueprints
+app.register_blueprint(events_bp)
+app.register_blueprint(auth_bp)
+
+# Protected endpoint for regular users
+@app.route("/api/view_events", methods=["GET"])
+@jwt_required()
+def view_events():
+    return jsonify({"message": "Viewing events"}), 200
+
+# Connection to the contact form
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///contact_form.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
+
+@app.route("/api/contact", methods=["POST"])
+def contact_form():
+    data = request.json
+    email = data.get("email")
+    message = data.get("message")
+
+    new_submission = ContactSubmission(email=email, message=message)
+    db.session.add(new_submission)
+    db.session.commit()
+
+    return jsonify({"message": "Contact form submitted successfully"}), 201
+
+# Render the contact form page
+@app.route("/contact", methods=["GET"])
+def contact_form_page():
+    return render_template("contact_form.html")
+
+if __name__ == "__main__":
+    app.run(debug=True)
