@@ -1,10 +1,11 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Blueprint
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_sqlalchemy import SQLAlchemy
-from api.models import User, Event, ContactSubmission
-from api.utils import generate_sitemap, APIException
+from flask_bcrypt import Bcrypt  # Import the Bcrypt module
+from models import User,Event,ContactSubmission
 
+# Initialize the Flask application
 app = Flask(__name__)
 CORS(app)
 
@@ -16,6 +17,9 @@ jwt = JWTManager(app)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
+
+# Initialize the Bcrypt extension
+bcrypt = Bcrypt(app)
 
 # Create a Blueprint for the events routes
 events_bp = Blueprint("events", __name__)
@@ -93,8 +97,8 @@ def login():
         return jsonify({"message": "Invalid email or password"}), 401
 
 # Register the Blueprints
-app.register_blueprint(events_bp)
-app.register_blueprint(auth_bp)
+app.register_blueprint(events_bp, url_prefix='/events')
+app.register_blueprint(auth_bp, url_prefix='/auth')
 
 # Protected endpoint for regular users
 @app.route("/api/view_events", methods=["GET"])
