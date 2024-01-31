@@ -1,7 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
 export const SignUpForm = () => {
+  {/* this is the integration with the back end */}
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '' ,
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try{
+    const response = await fetch(" ",{
+    method: 'POST',
+    
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(formData),
+    
+  });
+const data = await response.json();
+
+console.log(data);
+} catch (error){
+  console.log("There is an error: ", error );
+}
+};
+
   return (
     <div className="container-full py-5 h-100 black-background">
       <div className="signup row d-flex justify-content-center align-items-center h-100">
