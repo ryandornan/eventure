@@ -1,51 +1,70 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from app import app, db
-from models import User, Event
+"""
+This module takes care of starting the API Server, Loading the DB and Adding the endpoints
+"""
+from flask import Flask, request, jsonify, url_for, Blueprint
+from api.models import db, User,Event
+from api.utils import generate_sitemap, APIException
+from flask_cors import CORS
 
-# Create a Blueprint for authentication routes
-auth_bp = Blueprint("auth", __name__)
+api = Blueprint('api', __name__)
 
-# User Registration
-@auth_bp.route('/register', methods=['POST'])
-def register():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
+# Allow CORS requests to this API
+CORS(api)
 
-    existing_user = User.query.filter_by(username=username).first()
-    if existing_user:
-        return jsonify({'message': 'Username already exists'}), 400
 
-    new_user = User(username=username, password=password)
-    db.session.add(new_user)
-    db.session.commit()
+@api.route('/hello', methods=['POST', 'GET'])
+def handle_hello():
 
-    return jsonify({'message': 'User registered successfully'}), 201
+    response_body = {
+        "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
+    }
 
-# User Login
-@auth_bp.route('/login', methods=['POST'])
+    return jsonify(response_body), 200
+
+#LogIn Route 
+
+@api.route('/login', methods=['POST'])
 def login():
-    data = request.json
-    username = data.get('username')
+    data = request.get_json()
+    email = data.get('email')
     password = data.get('password')
 
-    user = User.query.filter_by(username=username).first()
+    user = User.query.filter_by(email=email).first()
 
-    if not user or user.password != password:
-        return jsonify({'message': 'Invalid username or password'}), 401
+    if user and user.check_password(password):
+        # Authentication successful
+        return jsonify({"message": "Login successful"}), 200
+    else:
+        return jsonify({"message": "Login failed"}), 401
+    
+#SignUp Route 
 
-    access_token = create_access_token(identity=user.id)
-    return jsonify(access_token=access_token), 200
+@api.route('/signup', methods=['POST'])
+def signup():
+    data = request.json  
+    # Process the data (e.g., store it in a database)
 
-# Protected route for viewing events
-@auth_bp.route('/view_events', methods=['GET'])
-@jwt_required()
-def view_events():
-    events = Event.query.all()
-    # Implement logic to fetch and return events data from the database
-    event_data = [{'title': event.title, 'description': event.description} for event in events]
-    return jsonify({'events': event_data}), 200
+    return jsonify({'message': 'Signup successful'})
 
-# ... Define other routes and views for registration, login, event details, etc.
+#Event Route 
 
+@api.route('/create-event', methods=['POST'])
+def create_event():
+    data = request.json
+
+    # Event model with appropriate fields (name, description, location, date, price, image)
+
+    new_event = Event(
+        name=data['name'],
+        description=data['description'],
+        location=data['location'],
+        date=data['date'],
+        price=data['price'],
+        image=data['image']
+    )
+
+    # Save to database or perform any required actions
+    # For example: db.session.add(new_event)
+    #               db.session.commit()
+
+    return jsonify({'message': 'Event created successfully'}), 201
