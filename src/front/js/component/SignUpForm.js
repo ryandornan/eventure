@@ -31,6 +31,16 @@ const handleSubmit = async (e) => {
   });
 const data = await response.json();
 
+ // If signup is successful and a token is received
+ if (response.ok && data.token) {
+  // Store the token in localStorage or another form of persistent storage
+  localStorage.setItem('token', data.token);
+
+  console.log('Signup successful, token received:', data.token);
+} else {
+  console.log('Signup failed:', data.message);
+}
+
 console.log(data);
 } catch (error){
   console.log("There is an error: ", error );
