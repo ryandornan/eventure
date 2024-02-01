@@ -46,7 +46,8 @@ console.log(data);
 
               {/* Header */}
               <h2 className="mb-5">Sign Up Now.</h2>
-
+              
+              <form onSubmit={handleSubmit}>
               {/* Names Input */}
               <div className="row">
                 {/* First Name Input */}
@@ -57,6 +58,8 @@ console.log(data);
                       id="typeFirstName"
                       className="form-control form-control-lg"
                       placeholder="First Name"
+                      value={FormData.firstName}
+                      onChange={handleChange}
                     />
                   </div>
                 </div>
@@ -69,6 +72,8 @@ console.log(data);
                       id="typeLastName"
                       className="form-control form-control-lg"
                       placeholder="Last Name"
+                      value={formData.lastName}
+                      onChange={handleChange}
                     />
                   </div>
                 </div>
@@ -81,6 +86,8 @@ console.log(data);
                   id="typeEmailX-2"
                   className="form-control form-control-lg"
                   placeholder="Email"
+                  value={formData.email}
+                  onChange={handleChange}
                 />
               </div>
 
@@ -91,6 +98,8 @@ console.log(data);
                   id="typePasswordX-2"
                   className="form-control form-control-lg"
                   placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
                 />
               </div>
 
@@ -104,6 +113,8 @@ console.log(data);
                   Sign Up
                 </button>
               </div>
+              </form>
+
 
             </div>
           </div>
