@@ -53,8 +53,6 @@ console.log(data);
         <div className="col-12 col-md-8 col-lg-6 col-xl-5">
           <div className="card custom-card shadow-2-strong" style={{ borderRadius: "1rem" }}>
             <div className="card-body p-5">
-
-              {/* Header */}
               <h2 className="mb-5">Sign Up Now.</h2>
               
               <form onSubmit={handleSubmit}>
@@ -113,12 +111,12 @@ console.log(data);
                 />
               </div>
 
-              {/* Remember Password and Login Button */}
+              {/* SignUp Button */}
               <div className="d-flex flex-column align-items-center mb-4">
-                {/* Sign Up Button*/}
                 <button
                   className="btn btn-primary custom-btn"
-                  type="submit"
+                  type="button" // Change type to "button" to prevent form submission
+                  onClick={handleSignUp}
                 >
                   Sign Up
                 </button>
