@@ -6,8 +6,12 @@ export const SignUpForm = () => {
     firstName: '',
     lastName: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: '',
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,8 +23,17 @@ export const SignUpForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null); // Reset error state
+    setLoading(true);
+
     try {
-      const response = await fetch(`${BACKEND_URL}/api/signup`, {
+      // Check if passwords match
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
+
+      const response = await fetch("api/sign-up", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,12 +49,16 @@ export const SignUpForm = () => {
         localStorage.setItem('token', data.token);
         console.log('Signup successful, token received:', data.token);
       } else {
+        setError(data.message || 'Signup failed');
         console.log('Signup failed:', data.message);
       }
 
       console.log(data);
     } catch (error) {
+      setError('An error occurred during signup');
       console.log("There is an error: ", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -113,17 +130,39 @@ export const SignUpForm = () => {
                   />
                 </div>
 
+                {/* Confirm Password Input */}
+                <div className="form-outline mb-4">
+                  <input
+                    type="password"
+                    id="typeConfirmPasswordX-2"
+                    name="confirmPassword"
+                    className="form-control form-control-lg"
+                    placeholder="Confirm Password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                {/* Error Message */}
+                {error && <p className="text-danger">{error}</p>}
+
                 {/* SignUp Button */}
                 <div className="d-flex flex-column align-items-center mb-4">
                   <button
                     className="btn btn-primary custom-btn"
                     type="button" // Change type to "button" to prevent form submission
                     onClick={handleSubmit}
+                    disabled={loading}
                   >
-                    Sign Up
+                    {loading ? 'Signing Up...' : 'Sign Up'}
                   </button>
                 </div>
               </form>
+
+              {/* Link to Login Page */}
+              <div className="text-center">
+                <p className="mb-0">Already have an account? <Link to="/login">Login here</Link>.</p>
+              </div>
             </div>
           </div>
         </div>

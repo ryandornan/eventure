@@ -5,6 +5,8 @@ from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
+from werkzeug.security import generate_password_hash
+
 
 api = Blueprint('api', __name__)
 
@@ -39,12 +41,41 @@ def login():
     
 #SignUp Route 
 
-@api.route('/signup', methods=['POST'])
+@api.route('/sign-up', methods=['POST'])
 def signup():
-    data = request.json  
-    # Process the data (e.g., store it in a database)
+    try:
+        data = request.json
 
-    return jsonify({'message': 'Signup successful'})
+        # Extract data from the request
+        first_name = data.get('firstName')
+        last_name = data.get('lastName')
+        email = data.get('email')
+        password = data.get('password')
+
+        # Validate the data
+        if not all([first_name, last_name, email, password]):
+            raise APIException("All fields are required", status_code=400)
+
+        # Check if the email already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            raise APIException("Email already exists", status_code=400)
+
+        # Create a new user
+        hashed_password = generate_password_hash(password, method='sha256')
+        new_user = User(first_name=first_name, last_name=last_name, email=email, password=hashed_password)
+
+        # Add the new user to the database
+        db.session.add(new_user)
+        db.session.commit()
+
+        return jsonify({'message': 'Signup successful'}), 201
+
+    except APIException as e:
+        return jsonify({"message": str(e)}), e.status_code
+
+    except Exception as e:
+        return jsonify({"message": "Internal Server Error"}), 500
 
 #Event Route 
 
