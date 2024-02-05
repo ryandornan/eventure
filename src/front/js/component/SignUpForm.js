@@ -20,7 +20,7 @@ export const SignUpForm = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   try{
-    const response = await fetch(" ",{
+    const response = await fetch("https://super-duper-xylophone-x5w5pw4qrrwwh656g-3001.app.github.dev/",{
     method: 'POST',
     
     headers: {
