@@ -3,13 +3,13 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 """
 import os
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Event
+from api.models import db, User, Event, Payment
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS 
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
-
+import stripe
 
 #Create flask app
 api = Blueprint('api', __name__)
@@ -171,3 +171,32 @@ def delete_event(event_id):
     db.session.commit()
 
     return jsonify({'message': 'Event deleted successfully'}), 200
+# Stripe secret key how do we create this??
+
+@api.route('/payment', methods=['POST'])
+def create_payment():
+    data = request.json
+    new_payment = Payment(
+        user_id=data['user_id'],
+        amount=data['price'],
+       # currency=data['currency'],
+        status=data['status'],
+        #transaction_id=data.get('transaction_id')  # Optional
+    )
+    db.session.add(new_payment)
+    db.session.commit()
+    return jsonify({'message': 'Payment created successfully', 'payment_id': new_payment.id}), 201
+
+@api.route('/payments/<int:user_id>', methods=['GET'])
+def get_payments_for_user(user_id):
+    payments = Payment.query.filter_by(user_id=user_id).all()
+    payments_data = [{
+        'id': payment.id,
+        'amount': payment.amount,
+       # 'currency': payment.currency,
+        'status': payment.status,
+        'transaction_id': payment.transaction_id,
+        'created_at': payment.created_at.isoformat()
+    } for payment in payments]
+    return jsonify(payments_data)
+
