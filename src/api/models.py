@@ -28,3 +28,11 @@ class Event(db.Model):
     date = db.Column(db.String(10), nullable=False)  # Adjust as needed
     price = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(255))  # Assuming you store file paths, adjust as needed
+
+class TicketPurchase(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    total_price = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(50), default='pending')  # e.g., 'pending', 'completed', 'cancelled'

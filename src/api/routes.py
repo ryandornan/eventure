@@ -3,16 +3,22 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 """
 import os
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Event
+from api.models import db, User, Event,TicketPurchase
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS 
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
+from dotenv import load_dotenv
+import stripe
 
 
 #Create flask app
 api = Blueprint('api', __name__)
+
+load_dotenv()  # Load environment variables from a .env file
+
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 # Allow CORS requests to this API
 CORS(api)
@@ -194,3 +200,62 @@ def delete_event(event_id):
     db.session.commit()
 
     return jsonify({'message': 'Event deleted successfully'}), 200
+
+
+
+@api.route('/checkout', methods=['POST'])
+def checkout():
+    data = request.json
+    event_id = data.get('event_id')
+    quantity = data.get('quantity')
+    user_email = data.get('email')  # Assuming the client sends the user's email
+    
+    # Find the event to get the price
+    event = Event.query.get(event_id)
+    if not event:
+        return jsonify({'message': 'Event not found'}), 404
+
+    # Calculate the total price in cents
+    total_price = int(event.price * quantity * 100)  # Stripe expects amount in cents
+
+    try:
+        # Create a PaymentIntent with the order amount and currency
+        intent = stripe.PaymentIntent.create(
+            amount=total_price,
+            currency='usd',
+            description=f'Tickets for {event.name}',
+            receipt_email=user_email,
+        )
+
+        return jsonify({'clientSecret': intent.client_secret}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@api.route('/webhook', methods=['POST'])
+def stripe_webhook():
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature')
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, os.getenv('STRIPE_ENDPOINT_SECRET')
+        )
+
+        # Handle the event
+        if event['type'] == 'payment_intent.succeeded':
+            payment_intent = event['data']['object']
+            handle_payment_success(payment_intent)
+        else:
+            return jsonify({'message': 'Unhandled event type'}), 400
+    except ValueError:
+        # Invalid payload
+        return 'Invalid payload', 400
+    except stripe.error.SignatureVerificationError:
+        # Invalid signature
+        return 'Invalid signature', 400
+
+    return jsonify({'message': 'Success'}), 200
+
+def handle_payment_success(payment_intent):
+    # Here you could update your database to mark the tickets as paid
+    print(f"Payment for {payment_intent['amount']} succeeded.")
