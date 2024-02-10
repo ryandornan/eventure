@@ -29,6 +29,16 @@ class Event(db.Model):
     price = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(255))  # Assuming you store file paths, adjust as needed
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "date": self.date.strftime("%Y-%m-%d %H:%M:%S"),
+            "location": self.location,
+
+        }
+
 class TicketPurchase(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

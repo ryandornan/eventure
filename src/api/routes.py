@@ -259,3 +259,10 @@ def stripe_webhook():
 def handle_payment_success(payment_intent):
     # Here you could update your database to mark the tickets as paid
     print(f"Payment for {payment_intent['amount']} succeeded.")
+
+@api.route('/api/search')
+def search():
+    query = request.args.get('query', '')
+    events = Event.query.filter(Event.title.ilike(f'%{query}%')).all()
+
+    return jsonify(events=[event.to_dict() for event in events]) 

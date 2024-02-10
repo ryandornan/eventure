@@ -49,7 +49,7 @@ const EventSingle = () => {
           </div>
 
           {/* Buy Tickets Button */}
-          <button className="btn btn-primary custom-btn mt-2">Buy Tickets Now</button>
+          <button className="btn btn-primary custom-btn mt-2" onClick={handleBuyTickets} >Buy Tickets Now</button>
         </div>
       </div>
     </div>
