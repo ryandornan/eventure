@@ -14,7 +14,11 @@ import { LogIn } from "./pages/login";
 import { SignUp } from "./pages/signUp";
 import { CreateEvent } from "./pages/createEvent";
 import { Contact } from "./pages/contact";
-
+import Checkout from "./pages/CheckoutElement";
+import SuccessPage from "./pages/successPage";
+import FailurePage from "./pages/failurepage";
+import EventSearchBar from "./component/EventSearchBar";
+import SearchResults from "./pages/SearchResults"; 
 //create your first component
 const Layout = () => {
     //the basename is used when your project is published in a subdirectory and not in the root of the domain
@@ -36,7 +40,16 @@ const Layout = () => {
                         <Route element={<LogIn />} path="/login" />
                         <Route element={<SignUp />} path="/sign-up" />
                         <Route element={<CreateEvent />} path="/create-event" />
+                        <Route element={<Checkout />} path="/checkout" />
+                        <Route path="/success" element={<SuccessPage />} />
+                        <Route path="/failure" element={<FailurePage />} />
+                    
+                        {/*<Route path="/search" element={<SearchResults />} />  
                         {/*<Route element={<Private />} path="/private" />*/}
+                      
+                        {/* Define other routes */}
+                        
+                    
 
                         {/* <Route element={<Single />} path="/single/:theid" /> */}
                         <Route element={<h1>Not found!</h1>} />

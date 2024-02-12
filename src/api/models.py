@@ -34,9 +34,23 @@ class Event(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "date": self.date.strftime("%Y-%m-%d %H:%M:%S"),
             "location": self.location,
+            'date': self.date,
+            'price': self.price,
+        }
 
+
+    # Add any additional fields you may need for the Post model
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "content": self.content,
+            "tags": self.tags,
+            "date_posted": self.date_posted.isoformat(),  # Convert datetime to a string in ISO format
+            # "author": self.author.to_dict() if self.author else None,  # If you have a related author object
+            # Include any additional fields in the dictionary
         }
 
 class TicketPurchase(db.Model):
@@ -46,3 +60,4 @@ class TicketPurchase(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(50), default='pending')  # e.g., 'pending', 'completed', 'cancelled'
+

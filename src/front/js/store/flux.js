@@ -31,6 +31,15 @@ const getState = ({ getStore, getActions, setStore }) => {
 				console.log ("Application opened. Syncing the sessionsStorage token.")
 				if ( token && token != "" && token != undefined) setStore ({ token: token })
 			},
+				fetchEvents: (searchParams) => {
+					// Fetch logic here
+				},
+				setSearchParams: (params) => {
+					getStore().setSearchParams(params);
+				},
+				clearSearchResults: () => {
+					getStore().clearSearchResults();
+				},
 
 			logout: () => {
 				sessionStorage.removeItem("token")
@@ -98,6 +107,17 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("Error loading message from backend", error)
 				}
 			},
+
+			fetchEvents: (searchParams) => {
+					// Fetch logic here
+				},
+			setSearchParams: (params) => {
+					getStore().setSearchParams(params);
+				},
+			clearSearchResults: () => {
+					getStore().clearSearchResults();
+				},
+			
 			changeColor: (index, color) => {
 				//get the store
 				const store = getStore();
@@ -113,6 +133,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				setStore({ demo: demo });
 			}
 		}
+
 	};
 };
 

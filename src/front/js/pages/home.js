@@ -14,6 +14,8 @@ import { ContactForm } from "../component/ContactForm";
 import HeroImage from "/workspaces/europe-fs-pt-14-ryandornan-mariahurtado/src/front/img/music/crowd-02.png";
 import EventSingle from "../component/EventSingle";
 import SignUpNow from "../sections/SignUpNow";
+import SearchResults from "./SearchResults";
+
 
 export const Home = () => {
 	const { store, actions } = useContext(Context);

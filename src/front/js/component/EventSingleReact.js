@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AboutImage from '/workspaces/europe-fs-pt-14-ryandornan-mariahurtado/src/front/img/music/crowd-02.png';
+import { useNavigate } from 'react-router-dom';
 
 const EventSingle = ({ eventId }) => {
   const [event, setEvent] = useState(null);
@@ -39,6 +40,10 @@ const EventSingle = ({ eventId }) => {
   if (!event) {
     return <div>Event not found</div>;
   }
+  
+  const handleBuyTickets = () => {
+    navigate('/checkout', { state: { event: selectedEvent } });
+  };
 
   return (
     <div className="container-full black-background">
@@ -82,7 +87,7 @@ const EventSingle = ({ eventId }) => {
           </div>
 
           {/* Buy Tickets Button */}
-          <button className="btn btn-primary custom-btn mt-2">Buy Tickets Now</button>
+           <button className ="btn btn-primary custom-btn mt-2" onClick= {handleBuyTickets()}>Buy Tickets Now</button>
         </div>
       </div>
     </div>

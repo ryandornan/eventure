@@ -260,9 +260,32 @@ def handle_payment_success(payment_intent):
     # Here you could update your database to mark the tickets as paid
     print(f"Payment for {payment_intent['amount']} succeeded.")
 
-@api.route('/api/search')
-def search():
+@api.route('/search', methods=['GET'], endpoint='search_get')
+def search_get():
+    # Your search logic for GET request
     query = request.args.get('query', '')
-    events = Event.query.filter(Event.title.ilike(f'%{query}%')).all()
+    if query:
+        # Replace 'Event.query' with your actual query logic
+        events = Event.query.filter(Event.name.ilike(f'%{query}%')).all()
+        return jsonify({'events': [event.to_dict() for event in events]})
+    else:
+        return jsonify({'message': 'No query provided'}), 400
 
-    return jsonify(events=[event.to_dict() for event in events]) 
+@api.route('/search', methods=['POST'])
+def search_by_tag():
+    # Get the tag from the form data
+    tag = request.form["tag"]
+    
+    # Create the search pattern
+    search = "%{}%".format(tag)
+    
+    # Perform the query using the like operator
+    posts = Event.query.filter(Event.tags.like(search)).all()
+    
+    # Convert the posts to a list of dictionaries (assuming a to_dict method exists on the Post model)
+    results = [Event.to_dict() for Event in Event]
+    
+    # Return the search results as JSON
+    return jsonify(results), 200
+
+

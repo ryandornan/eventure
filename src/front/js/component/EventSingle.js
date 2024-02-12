@@ -1,9 +1,37 @@
-// EventSingleTwo.js
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import React from 'react';
-import AboutImage from '/workspaces/europe-fs-pt-14-ryandornan-mariahurtado/src/front/img/music/crowd-02.png';
+const EventSingle = ({ eventId }) => {
+  const navigate = useNavigate();
+  const [event, setEvent] = useState(null);
 
-const EventSingle = () => {
+  useEffect(() => {
+    // Replace '/api/event/1' with your actual API endpoint and use `eventId` as needed
+    fetch(`/api/event/${eventId}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setEvent(data);
+      })
+      .catch(error => console.error("Fetch error:", error));
+  }, [eventId]); // Dependency array, re-run effect if `eventId` changes
+
+  const handleBuyTickets = () => {
+    if (event) {
+      navigate('/checkout', { state: { event } });
+    }
+  };
+
+  if (!event) {
+    return <div>Loading event details...</div>;
+  }
+  // Function to handle the "Buy Tickets Now" button click
+ 
+
   return (
     <div className="container-full black-background">
       <div className="container event-single d-flex justify-content-center align-items-center">
@@ -50,9 +78,11 @@ const EventSingle = () => {
 
           {/* Buy Tickets Button */}
           <button className="btn btn-primary custom-btn mt-2" onClick={handleBuyTickets} >Buy Tickets Now</button>
-        </div>
+          
+          </div>
       </div>
     </div>
+    
   );
 };
 
