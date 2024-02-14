@@ -9,10 +9,12 @@ from flask_cors import CORS
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
+import stripe
+
 
 
 #Create flask app
-api = Blueprint('api', __name__)
+api = Blueprint('api', __name__,static_folder='client/build', static_url_path='')
 
 # Allow CORS requests to this API
 CORS(api)
@@ -323,4 +325,32 @@ def delete_event(event_id):
     db.session.commit()
 
     return jsonify({'message': 'Event deleted successfully'}), 200
+
+
+#checkout route #
+# Set up Stripe
+stripe.api_key = os.getenv('sk_test_51OhD12B2QXl6TPu6EkFJnKTJ88wLF7hUu1W6q760IizEEvUoG1Xtv0DxPDMTCWdtG6fxSOv6lkasr9iDovqjYYRb009BAiAujX')
+
+@api.route('/config')
+def get_config():
+   return jsonify({
+        'publishableKey': os.getenv('"sk_test_51OhD12B2QXl6TPu6EkFJnKTJ88wLF7hUu1W6q760IizEEvUoG1Xtv0DxPDMTCWdtG6fxSOv6lkasr9iDovqjYYRb009BAiAujX"')
+    })
+@api.route('/create-payment-intent', methods=['POST'])
+def create_payment_intent():
+    try:
+        data = request.get_json()
+        amount = data.get('amount')  # Get amount from request body
+        currency = data.get('currency', 'eur')  # Get currency from request body, default to 'eur'
+        
+        paymentIntent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency=currency,
+            automatic_payment_methods={'enabled': True},
+        )
+        
+        return jsonify({'clientSecret': paymentIntent.client_secret})
+    except Exception as e:
+        print(e)
+        return jsonify(error=str(e)), 403
 

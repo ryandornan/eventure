@@ -16,7 +16,8 @@ import { CreateEvent } from "./pages/createEvent";
 import { Contact } from "./pages/contact";
 import EventSingle from "./component/EventSingle";
 import EventsPage from "./pages/EventsPage";
-
+import Payment from "./pages/Payment";
+import Completion from "./component/Completation";
 const Layout = () => {
     const basename = process.env.BASENAME || "";
 
@@ -36,7 +37,10 @@ const Layout = () => {
                         <Route element={<SignUp />} path="/sign-up" />
                         <Route element={<CreateEvent />} path="/create-event" />
                         <Route element={<h1>Not found!</h1>} />
-                        <Route element={<EventSingle />} path="/single-event" />
+                       
+                        <Route element={<Payment/>} path="/payment" />
+                        <Route element={<Completion />} path="/completition" />
+                        
                     </Routes>
                     <Footer />
                 </ScrollToTop>
