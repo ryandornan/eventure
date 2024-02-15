@@ -338,29 +338,49 @@ def get_sports_events():
 
 
 
-stripe.api_key = os.getenv("sk_test_51OcucnHQhMxwalDDId7AeC412juf9O0ZGM7WSxudjwbHAex2W0kYAxkGkoNAZUSkg3s3AoF8Fa3qKbsm3Yyat4PF00Tn74HcHA")
+# Load Stripe secret key from environment variable
+from dotenv import load_dotenv
+import logging
+
+load_dotenv()
+# Configure Stripe with the secret key from environment variables
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+if not stripe.api_key:
+    logging.error("Stripe secret key not found. Make sure STRIPE_SECRET_KEY is set.")
 
 @api.route('/config')
 def get_config():
-    return jsonify({
-        'publishableKey': os.getenv('pk_test_51OcucnHQhMxwalDDbDv4n5CtxomCq5gjodiz1k8zg6VAvXS0GFgcBAfBO8Ro5UOc2fba7oRTAR2mrVEhhX8nvIuD00h05feQbA')
-    })
+    try:
+        publishableKey = os.getenv('STRIPE_PUBLISHABLE_KEY')
+        if not publishableKey:
+            logging.error("STRIPE_PUBLISHABLE_KEY is not set.")
+            return jsonify({'error': 'Stripe publishable key is not configured.'}), 500
+
+        return jsonify({
+            'publishableKey': publishableKey
+        })
+    except Exception as e:
+        logging.error(f"Error getting config: {e}")
+        return jsonify({'error': 'Internal Server Error'}), 500
 
 @api.route('/create-payment-intent', methods=['POST'])
 def create_payment_intent():
     try:
         data = request.get_json()
-        amount = data.get('amount')  # Make sure this is in the smallest currency unit!
-        currency = data.get('currency', 'eur')  # Default to 'eur' if not specified
-        
-        # Create a PaymentIntent with the order amount and currency
+        if 'amount' not in data:
+            return jsonify({'error': 'Payment request must include amount.'}), 400
+
+        amount = data['amount']
+        currency = 'eur'  # Default to 'eur' or change to your preferred currency
+
+        # Create a PaymentIntent with the order amount and fixed currency
         paymentIntent = stripe.PaymentIntent.create(
             amount=amount,
             currency=currency,
             automatic_payment_methods={'enabled': True},
         )
-        
+
         return jsonify({'clientSecret': paymentIntent.client_secret})
     except Exception as e:
-        print(e)
-        return jsonify({'error': str(e)}), 403
+        logging.error(f"Failed to create payment intent: {e}")
+        return jsonify({'error': 'Failed to create payment intent.'}), 403

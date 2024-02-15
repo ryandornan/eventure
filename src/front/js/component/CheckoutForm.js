@@ -1,75 +1,59 @@
+// CheckoutForm.js
 import React, { useState, useEffect } from 'react';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 
-export default function CheckoutForm() {
+export default function CheckoutForm({ event }) {
   const stripe = useStripe();
   const elements = useElements();
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
   const [clientSecret, setClientSecret] = useState('');
   const [message, setMessage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Fetch the clientSecret from your backend
   useEffect(() => {
-    fetch("/create-payment-intent", {
+    // Replace "/create-payment-intent" with your actual endpoint that expects event ID and returns clientSecret
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/create-payment-intent`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      // Add any necessary data in the body, for example, the payment amount
-      body: JSON.stringify({ amount: 1999 }), // Example amount in cents
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventId: event.id, amount: event.price }) // Assuming your event object has an id and price
     })
     .then(response => response.json())
-    .then(data => {
-      setClientSecret(data.clientSecret);
-    })
-    .catch(error => {
-      console.error("Error fetching client secret:", error);
-    });
-  }, []);
+    .then(data => setClientSecret(data.clientSecret))
+    .catch(error => console.error("Error fetching client secret:", error));
+  }, [event]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!stripe || !elements || !clientSecret) {
-      // Ensure Stripe.js has loaded and clientSecret is set before proceeding
       console.error("Stripe.js has not loaded, or clientSecret is not set.");
       return;
     }
 
     setIsProcessing(true);
 
-    const { error } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: elements.getElement(PaymentElement),
-        // Include any other payment method details here
-      },
+    const result = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: { card: elements.getElement(PaymentElement) },
     });
 
-    if (error) {
-      setMessage(error.message);
+    if (result.error) {
+      setMessage(result.error.message);
       setIsProcessing(false);
     } else {
-      // The payment has been processed!
-      setMessage("Payment successful!");
-      // Redirect to a success page after successful payment
-      navigate('/payment-success'); // Replace '/payment-success' with your success route
-      setIsProcessing(false);
+      if (result.paymentIntent.status === 'succeeded') {
+        setMessage("Payment successful!");
+        navigate('/payment-success'); // Navigate to a success page
+        setIsProcessing(false);
+      }
     }
   };
 
   return (
     <form id="payment-form" onSubmit={handleSubmit}>
-      {/* Conditionally render the PaymentElement only if clientSecret is available */}
       {clientSecret && <PaymentElement />}
-      <button disabled={isProcessing || !stripe || !clientSecret} id="submit">
-        <span id="button-text">
-          {isProcessing ? "Processing..." : "Pay Now"}
-        </span>
-      </button>
-      {/* Show any error or success messages */}
-      {message && <div id="payment-message">{message}</div>}
+      <button disabled={isProcessing || !stripe || !clientSecret}>Pay Now</button>
+      {message && <div>{message}</div>}
     </form>
   );
 }
