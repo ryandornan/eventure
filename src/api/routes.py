@@ -2,13 +2,16 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for, Blueprint
+
+from flask import Flask, request, jsonify, url_for, Blueprint, redirect
 from api.models import db, User, Event
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS 
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
+import stripe
+# This is your test secret API key.
 
 
 #Create flask app
@@ -334,3 +337,26 @@ def get_sports_events():
 
     # Return sports events data
     return jsonify({'sports_events': sports_event_list}), 200
+
+#Checkout Route#
+
+@api.route('/create-checkout-session/<string:price>', methods=['POST'])
+def create_checkout_session(price):
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            line_items=[
+                {
+                    # Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+                    'price': price,
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url= 'https://studious-space-disco-g44xgwgg454hv5w-3000.app.github.dev' + '?success=true',
+            cancel_url='https://studious-space-disco-g44xgwgg454hv5w-3000.app.github.dev' + '?canceled=true',
+            automatic_tax={'enabled': True},
+        )
+    except Exception as e:
+        return str(e)
+
+    return redirect(checkout_session.url, code=303)

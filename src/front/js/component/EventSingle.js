@@ -4,7 +4,24 @@ import EventsSingleImage from "../../img/pitch/overlay/event-single-background.p
 
 
 const EventSingle = ({ event }) => {
+
+        const buyTicket = async (price) => {
+            try {
+                const response = await fetch(`${process.env.BACKEND_URL}/api/create-checkout-session/${price}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(eventData),
+                });
+            }
+
+            catch {}
+            
+    }
+
     return (
+        
         <div className="container-full" style={{ backgroundImage: `url(${EventsSingleImage})`, backgroundSize: 'cover', backgroundPosition: 'center'  }}>
 
         <div className="container event-single d-flex justify-content-center align-items-center">
@@ -48,7 +65,7 @@ const EventSingle = ({ event }) => {
                 </div>
 
                 {/* Buy Tickets Button */}
-                <button className="btn btn-primary custom-btn mt-2">Buy Tickets Now</button>
+                <button className="btn btn-primary custom-btn mt-2" onClick={() => {buyTicket(event.price)}}>Buy Tickets Now</button>
 
                     {/* Update Event Button */}
                     <div>
