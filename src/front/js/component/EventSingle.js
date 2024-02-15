@@ -1,61 +1,91 @@
-import React from "react";
-import { Link } from "react-router-dom"; 
-import EventsSingleImage from "../../img/pitch/overlay/event-single-background.png"
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { loadStripe } from '@stripe/stripe-js';
 
+// Your Stripe public key
+const stripePromise = loadStripe('pk_test_51OcucnHQhMxwalDDbDv4n5CtxomCq5gjodiz1k8zg6VAvXS0GFgcBAfBO8Ro5UOc2fba7oRTAR2mrVEhhX8nvIuD00h05feQbA');
 
-const EventSingle = ({ event }) => {
+const EventSingle = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [event, setEvent] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchEvent = async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch(`${process.env.BACKEND_URL}/api/event/${id}`);
+                const data = await response.json();
+                setEvent(data);
+            } catch (error) {
+                console.error("Error fetching event details:", error);
+                setError(error.message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchEvent();
+    }, [id]);
+
+    const handleBuyTicketsClick = async () => {
+        const stripe = await stripePromise;
+        const response = await fetch(`${process.env.BACKEND_URL}/api/create-checkout-session`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                eventId: event.id,
+                // Add any other event data you need for the transaction
+            }),
+        });
+        const session = await response.json();
+
+        // Redirect to Stripe Checkout
+        const result = await stripe.redirectToCheckout({
+            sessionId: session.id,
+        });
+
+        if (result.error) {
+            // Inform the user if there's an error.
+            console.error(result.error.message);
+        }
+    };
+
+    if (isLoading) {
+        return <div>Loading event details...</div>;
+    }
+
+    if (error) {
+        return <div>Error loading event details: {error}</div>;
+    }
+
     return (
-        <div className="container-full" style={{ backgroundImage: `url(${EventsSingleImage})`, backgroundSize: 'cover', backgroundPosition: 'center'  }}>
-
         <div className="container event-single d-flex justify-content-center align-items-center">
-            {/* Left Column - Image */}
             <div className="col-md-5 image-container">
-                <img src={event.image} className="img-fluid" alt="Event" style={{objectFit: 'cover', width: '100%', height: '100%'}} />
+                <img src={event.image} className="img-fluid" alt="Event" />
             </div>
-
-            {/* Right Column - Event Details */}
             <div className="col-md-6">
                 <div className="mb-4">
-                    {/* Event Title */}
                     <h3 className="mb-4">{event.name}</h3>
-
-                    {/* Event Description */}
                     <p>{event.description}</p>
                 </div>
-
-                {/* Event Date */}
                 <div className="d-flex align-items-center mb-3">
                     <i className="fas fa-calendar-alt me-2"></i>
-                    <span className="event-single-date">{event.date}</span>
+                    <span>{event.date}</span>
                 </div>
-
-                {/* Event Location */}
                 <div className="d-flex align-items-center mb-3">
                     <i className="fas fa-map-marker-alt me-2"></i>
-                    <span className="event-single-location">{event.venue}</span><span className="event-single-span">:</span><span className="event-single-span"> {event.city}</span>
+                    <span>{event.location}</span>
                 </div>
-
-                {/* Event Category */}
-                <div className="d-flex align-items-center mb-3">
-                <i class="fa-solid fa-list me-2"></i>
-                    <span className="event-single-category">{event.category}</span>
-                </div>
-
-                {/* Ticket Price */}
                 <div className="d-flex align-items-center mb-4">
                     <i className="fas fa-ticket-alt me-2"></i>
-                    <span className="event-single-ticket">Ticket Price</span><span className="event-single-span">:</span><span className="event-single-span">${event.price}</span>
+                    <span>Ticket Price: £{event.price}</span>
                 </div>
-
-                {/* Buy Tickets Button */}
-                <button className="btn btn-primary custom-btn mt-2">Buy Tickets Now</button>
-
-                    {/* Update Event Button */}
-                    <div>
-                        <Link to={`/update-event/${event.id}`} className="btn btn-primary custom-btn mt-2">Update Event</Link>
-                    </div>
+                <button className="btn btn-primary custom-btn mt-2" onClick={handleBuyTicketsClick}>Buy Tickets Now</button>
             </div>
-        </div>
         </div>
     );
 };

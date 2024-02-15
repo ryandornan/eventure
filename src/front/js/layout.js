@@ -21,6 +21,9 @@ import ComedyEventsPage from "./pages/ComedyEventsPage";
 import BusinessEventsPage from "./pages/BusinessEventsPage";
 import SportsEventsPage from "./pages/SportsEventsPage";
 import UpdateEvent from './pages/updateEvent';
+import Payment from "./pages/Payment";
+import Completion from "./component/Completation";
+
 
 const Layout = () => {
     const basename = process.env.BASENAME || "";
@@ -47,6 +50,9 @@ const Layout = () => {
                         <Route element={<UpdateEvent />} path="/update-event/:id" /> {/* Include the route for UpdateEventForm */}
                         <Route element={<h1>Not found!</h1>} />
                         <Route element={<EventSingle />} path="/single-event" />
+                        <Route element={<Payment/>} path="/payment" />
+                        <Route element={<Completion />} path="/completition" />
+                    
                     </Routes>
                     <Footer />
                 </ScrollToTop>

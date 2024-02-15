@@ -9,6 +9,7 @@ from flask_cors import CORS
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
+import stripe
 
 
 #Create flask app
@@ -334,3 +335,32 @@ def get_sports_events():
 
     # Return sports events data
     return jsonify({'sports_events': sports_event_list}), 200
+
+
+
+stripe.api_key = os.getenv("sk_test_51OcucnHQhMxwalDDId7AeC412juf9O0ZGM7WSxudjwbHAex2W0kYAxkGkoNAZUSkg3s3AoF8Fa3qKbsm3Yyat4PF00Tn74HcHA")
+
+@api.route('/config')
+def get_config():
+    return jsonify({
+        'publishableKey': os.getenv('pk_test_51OcucnHQhMxwalDDbDv4n5CtxomCq5gjodiz1k8zg6VAvXS0GFgcBAfBO8Ro5UOc2fba7oRTAR2mrVEhhX8nvIuD00h05feQbA')
+    })
+
+@api.route('/create-payment-intent', methods=['POST'])
+def create_payment_intent():
+    try:
+        data = request.get_json()
+        amount = data.get('amount')  # Make sure this is in the smallest currency unit!
+        currency = data.get('currency', 'eur')  # Default to 'eur' if not specified
+        
+        # Create a PaymentIntent with the order amount and currency
+        paymentIntent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency=currency,
+            automatic_payment_methods={'enabled': True},
+        )
+        
+        return jsonify({'clientSecret': paymentIntent.client_secret})
+    except Exception as e:
+        print(e)
+        return jsonify({'error': str(e)}), 403
