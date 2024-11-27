@@ -1,3 +1,5 @@
+A full stack web application for running, finding and managing Events. Built with React JS & Flask.  
+
 # WebApp boilerplate with React JS and Flask API
 
 Build web applications using React.js for the front end and python/flask for your backend API.
